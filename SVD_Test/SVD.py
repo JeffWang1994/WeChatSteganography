@@ -6,6 +6,7 @@ from sklearn.metrics import mean_squared_error
 from math import sqrt
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
+import matplotlib.pyplot as plt
 
 '''
 # 整理数据集_无差分配
@@ -31,19 +32,18 @@ for line in test_data:
 '''
 
 # 人为构建训练集和测试集
-data = []
-origin_data = np.load("top21.npy")
-for i in range(origin_data.shape[0]):
-    for j in range(origin_data.shape[1]):
-        data.append([i, j, origin_data[i, j]])
+origin_data = np.load("top21.npy")[:, 1600:1766]
 
-test_index = np.random.randint(0, 1766, 700,dtype=int)
-
+# 训练集
+test_index = np.arange(100, 165)
 train_data_matrix = origin_data
 for index in test_index:
     train_data_matrix[20, index] = 0
+print(train_data_matrix[20, 155])
 
-test_data_matrix = origin_data
+# 测试集
+test_data_matrix = np.load("top21.npy")[:, 1600:1766]
+print(test_data_matrix[20, 155])
 
 
 # 计算均方误差
@@ -53,9 +53,25 @@ def rmse(prediction, ground_truth):
 
     return sqrt(mean_squared_error(prediction, ground_truth))
 
+
+# sigmoid函数
+def sigmoid(x):
+    s = 1 / (1 + np.exp(-x))
+    return s
+
+
+# ReLU函数
+def relu(x_pred):
+    for xi in range(x_pred.shape[0]):
+        for xj in range(x_pred.shape[1]):
+            if x_pred[xi,xj] <= 0:
+                x_pred[xi, xj] = 0
+    return x_pred
+
 '''
 user_similarity = pairwise_distances(train_data_matrix, metric="cosine")
 item_similarity = pairwise_distances(train_data_matrix.T, metric="cosine")
+
 
 def predict(rating, similarity, type='user'):
     if type == 'user':
@@ -72,23 +88,45 @@ user_prediction = predict(train_data_matrix, user_similarity, type='user')
 print('User based CF RMSE: ' + str(rmse(user_prediction, test_data_matrix)))
 print('Item based CF RMSe: ' + str(rmse(item_prediction, test_data_matrix)))
 print('user based CF result of Hong:\n')
-print(user_prediction[8, :])
+print(user_prediction[20, :])
 print('item based CF result:\n')
-print(item_prediction[8, :])
+print(item_prediction[20, :])
 print('original Hong:\n')
-print(test_data_matrix[8, :])
+print(test_data_matrix[20, :])
 '''
 
+'''
 # 尝试使用SVD来进行矩阵分解。
-u, s, vt = svds(train_data_matrix, k=20)
+u, s, vt = svds(train_data_matrix, k=2)
+print(s)
 s_diag_matrix = np.diag(s)
 x_pred = np.dot(np.dot(u, s_diag_matrix), vt)
-x_result = x_pred
+x_result = relu(x_pred)
 #x_result[x_result < 0.5] = 0
 #x_result[x_result > 0.5] = 1
-print('User-based CF MSE: ' + str(rmse(x_result, test_data_matrix)))
-print(x_result[20, :])
-print(test_data_matrix[20, :])
+print('User-based CF MSE: ' + str(rmse(x_result[3,130:150], test_data_matrix[3,130:150])))
+#print(x_result[20, :])
+#print(test_data_matrix[20, :])
+'''
+
+# 画图
+loss = []
+for k in range(1, 20):
+    u, s, vt = svds(train_data_matrix, k)
+    s_diag_matrix = np.diag(s)
+    x_pred = np.dot(np.dot(u, s_diag_matrix), vt)
+    x_result = relu(x_pred)
+    print('User-based CF MSE: ' + str(rmse(x_result[20, 100:165], test_data_matrix[20, 100:165])))
+    loss.append(rmse(x_result[20, 100:165], test_data_matrix[20, 100:165]))
+
+k = np.arange(1, 20)
+
+plt.figure()
+plt.plot(k,loss)
+plt.ylim(0, 1)
+plt.show()
+
+
 
 print('finished!')
 

@@ -77,8 +77,6 @@ def itemUserList(origin_data):
         SUM = SUM + sum
         itemList.append(itemDist)
 
-    return itemList
-
     print("==========================")
     print("数据集中共有: {}条动态信息。".format(len(itemList)))
     print("动态列表示例:")
@@ -94,6 +92,8 @@ def itemUserList(origin_data):
     print(SUM)
     print("在{}条动态信息中，有{}条动态没有任何点赞信息".format(len(itemList), NonLikes))
     print("==========================")
+
+    return itemList
 
 
 # 建立以user为主索引的user-item矩阵, 返回user_item
