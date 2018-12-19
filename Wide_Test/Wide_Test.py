@@ -201,3 +201,5 @@ if __name__ == '__main__':
 
     Evaluation(test_label, result_gbdt)
     print('================================================================')
+
+    other_classifier(train_data, train_label, test_data, test_label)
