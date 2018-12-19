@@ -1,6 +1,13 @@
 import json
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from regression import *
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
 
 # 导入JSON文件
 f = open('sns_hong.json','r', encoding='UTF-8')
@@ -35,22 +42,22 @@ print('==========================')
 
 # 建立以item为主索引的item-user列表
 itemList = []
-SUM = 0
+SUMM = 0
 for item in origin_data:
     itemDist = {}
     itemDist['snsId'] = item['snsId']
     itemDist['authorId'] = item['authorId']
     itemDist['likesSum'] = len(item['likes'])
-    sum = 0
+    summ = 0
     for user in userNameList:
         itemDist[user] = 0
         for likes_user in item['likes']:
             if user == likes_user['userId']:
                 itemDist[user] = 1
-                sum = sum + 1
+                summ = summ + 1
             else:
                 itemDist[user] = 0
-    SUM = SUM + sum
+    SUMM = SUMM + summ
     itemList.append(itemDist)
 
 itemDataFrame = pd.DataFrame(itemList)
@@ -67,7 +74,7 @@ for item in itemList:
     if item['likesSum'] == 0:
         NonLikes = NonLikes+1
 print("总共有{}个点赞记录。".format(LikesSUM))
-print(SUM)
+print(SUMM)
 print("在{}条动态信息中，有{}条动态没有任何点赞信息".format(len(itemList), NonLikes))
 print("==========================")
 
@@ -88,13 +95,13 @@ for user in userNameList:
 print(user_item.shape)
 
 # 检测user-item矩阵中是否包含了所有的点赞记录
-SUM = 0
+SUMM = 0
 for i in range(len(userNameList)):
     for j in range(len(itemList)):
         if user_item[i,j] != 0:
-            SUM = SUM + 1
+            SUMM = SUMM + 1
 
-print(SUM)
+print(SUMM)
 
 single_max = []
 all_max = []
@@ -169,3 +176,113 @@ for item in origin_data:
                 co_occurrence[user_index,user_others_index] +=1
 
 print (co_occurrence)
+
+#找出与我点赞行为最相似的用户
+my_co_occurrence = co_occurrence[my_num]
+f2 = zip(my_co_occurrence,userNameList,num)
+my_co_top = sorted(f2,reverse = True)
+my_co_top20 = my_co_top[0:20]                           #跟我共同点赞最多的前20名用户
+print ('同时点赞次数最多：')
+print (my_co_top20)
+
+#删除无点赞信息或只有我点赞的item 构建user_item_arranged矩阵
+item_user = np.transpose(user_item)
+item_arranged = []
+for i in range(0,len(item_user)):
+    if sum(item_user[i]) !=0 :      #有点赞记录的item
+        if sum(item_user[i]) ==1:
+            if item_user[i,my_num] != 1 :  #去除仅被我点赞的item
+                item_arranged.append(item_user[i])
+        else:
+            item_arranged.append(item_user[i])
+user_item_arranged = np.transpose(item_arranged)
+
+# 建立以co_top20为主索引的co_top20_item矩阵
+co_top20_item = np.zeros((len(my_co_top20)+1, len(item_arranged)))
+num_index = 0
+for top_tuple in my_co_top20:
+    top_index = top_tuple[2]
+    co_top20_item[num_index]=user_item_arranged[top_index]
+    num_index +=1
+co_top20_item[num_index]=user_item_arranged[my_num]           #矩阵最后加上我的点赞记录
+print ('co_top(20+1)*item矩阵')
+print (co_top20_item)
+
+d = np.transpose(co_top20_item)
+#np.random.shuffle(d) #随机乱序
+n, m = d.shape
+test_num = round(1 * n / 3) #取数据集前1/3为测试集
+train_num = n - test_num  #后2/3训练集
+train_data = d[0:train_num,0: (m-1)]
+train_data = np.c_[train_data, np.ones((train_num,1))] #回归的时候会有常数项，故此处加了一列
+train_label = d[0:train_num,m-1].reshape(train_num,1) #python中一维数组默认是行向量，需要reshape函数转换
+test_data = d[train_num:n,0: (m-1)]
+test_data = np.c_[test_data, np.ones((test_num, 1))]
+test_label = d[train_num:n,m-1].reshape(test_num,1)
+
+print ("\n linear regression")
+print ("\t training start ...")
+threshold = (max(train_label) + min(train_label)) / 2
+gamma, eps, max_iter = 0.001, 0.00001, 10000
+w = linear_regression(train_data, train_label, 'gd', gamma, eps, max_iter)
+print ("\t training done !")
+train_y_predict = train_data.dot(w)
+test_y_predict = test_data.dot(w)
+
+print ("\t train predict error\t: %f"%(sum( abs( ((train_y_predict > threshold) + 0) - ((train_label > threshold) + 0) ))[0] / (train_num + 0)))
+print ("\t test predict error \t: %f"%(sum( abs( ((test_y_predict > threshold) + 0) - ((test_label > threshold) + 0) ))[0] / (test_num + 0)))
+prediction_arranged = np.zeros((len(test_y_predict), 1))
+length = len(test_y_predict)
+j = range(0,length-1)
+for i in j:
+    if test_y_predict[i] > 0.2:
+        prediction_arranged[i] = 1
+
+accuracy = accuracy_score(test_label,prediction_arranged)
+precision = precision_score(test_label,prediction_arranged)
+recall = recall_score(test_label,prediction_arranged)
+fpr,tpr,thresholds = roc_curve(test_label,prediction_arranged)
+roc_auc = roc_auc_score(test_label,prediction_arranged)
+
+plt.plot(fpr,tpr,linewidth=2,label="ROC")
+plt.xlabel("false presitive rate")
+plt.ylabel("true presitive rate")
+plt.ylim(0,1.05)
+plt.xlim(0,1.05)
+plt.legend(loc=4)#图例的位置
+plt.show()  #ROC曲线
+
+print('准确率:{}'.format(accuracy))
+print('精确率:{}'.format(precision))
+print('召回率:{}'.format(recall))
+
+'''
+print ("\nlog regression")
+print ("\t training start ...")
+min_label, max_label = min(train_label), max(train_label)
+train_label = train_label - min_label + 1 #保证label>0，才可以取对数
+test_label = test_label - min_label + 1 #保证label>0，才可以取对数
+threshold = (np.log(max(train_label)) + np.log(min(train_label))) / 2
+gamma, eps, max_iter = 0.001, 0.00001, 10000
+w = log_regression(train_data, train_label, 'gd', gamma, eps, max_iter)
+train_y_predict = train_data.dot(w)
+test_y_predict = test_data.dot(w)
+print ("\t training done")
+print ("\t train predict error\t: %f"%(sum( abs( ((train_y_predict > threshold) + 0) - ((train_label > threshold) + 0) ))[0] / (train_num + 0.0)))
+print ("\t test predict error \t: %f"%(sum( abs( ((test_y_predict > threshold) + 0) - ((test_label > threshold) + 0) ))[0] / (test_num + 0.0)))
+
+print ("\nlogistic regression")
+print ("\t training start ...")
+min_label, max_label = min(train_label), max(train_label)
+train_label = (train_label - min_label) / (max_label - min_label) #将label变为0，1
+test_label = (test_label - min_label) / (max_label - min_label) #将label变为0，1
+threshold = 0.5
+gamma, eps, max_iter = 0.001, 0.00001, 10000
+w = logistic_regression(train_data, train_label, 'gd', gamma, eps, max_iter)
+print ("\t training done")
+train_y_predict = sigmoid(train_data.dot(w))
+test_y_predict = sigmoid(test_data.dot(w))
+print ("\t train predict error \t: %f"%(sum( abs( ((train_y_predict > threshold) + 0) - ((train_label > threshold) + 0) ))[0] / (train_num + 0.0)))
+print ("\t test predict error \t: %f"%(sum( abs( ((test_y_predict > threshold) + 0) - ((test_label > threshold) + 0) ))[0] / (test_num + 0.0)))
+
+'''
