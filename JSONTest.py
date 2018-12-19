@@ -4,9 +4,9 @@ import pandas as pd
 import scipy.spatial.distance as dist
 
 
-# 导入JSON文件
-def Dataset():
-    f = open('sns_hong.json')
+# 导入JSON文件, 返回origin_data
+def Dataset(path):
+    f = open(path)
     origin_data = json.load(f)
 
     #print(type(origin_data))
@@ -21,7 +21,10 @@ def Dataset():
     return origin_data
 
 
-# 获取用户列表
+# 获取用户列表, 返回userNameList
+# 用户列表的形式为:<type: list>
+#               ['wxid_aw3jddgrdgw221', 'tangna-12', 'wxid_sa3w1zpucptq22',...]
+# 索引指南: userNameList[i]
 def userIdList(origin_data):
     userNameList = []
     for item in origin_data:
@@ -50,7 +53,10 @@ def userIdList(origin_data):
     return userNameList, usernicklist
 
 
-# 建立以item为主索引的item-user列表
+# 建立以item为主索引的item-user列表, 返回itemList
+# itemList的形式为: <type: dictionary>
+#                ['snsId': 12893789, 'authorId':'tangna-12', 'likesSum':23, 'userId1':0或1, ...]
+# 索引指南:itemList[i][snsId]
 def itemUserList(origin_data):
     itemList = []
     SUM = 0
@@ -71,8 +77,6 @@ def itemUserList(origin_data):
         SUM = SUM + sum
         itemList.append(itemDist)
 
-    return itemList
-
     print("==========================")
     print("数据集中共有: {}条动态信息。".format(len(itemList)))
     print("动态列表示例:")
@@ -89,8 +93,12 @@ def itemUserList(origin_data):
     print("在{}条动态信息中，有{}条动态没有任何点赞信息".format(len(itemList), NonLikes))
     print("==========================")
 
+    return itemList
 
-# 建立以user为主索引的user-item矩阵
+
+# 建立以user为主索引的user-item矩阵, 返回user_item
+# user_item的形式为: <type:numpy array>
+#   行为用户，列为item，每一单元为用户i对动态j的点赞情况，1为点赞，0为不点赞
 def userItemList(origin_data, userNameList, itemList):
     user_item = np.zeros((len(userNameList), len(itemList)))
 
@@ -175,14 +183,22 @@ def TestSet(userNameList):
     print(Hong)
 
 
+# 保存numpy数组
+def save_file(user_item):
+    np.save('user_item.npy', user_item)
+    print('File Saved!')
+
+
 # 主函数
 if __name__ == '__main__':
-    origin_data = Dataset()
+    origin_data = Dataset('sns_hong.json')
     userNameList, usernicklist = userIdList(origin_data)
     itemList = itemUserList(origin_data)
     user_item = userItemList(origin_data, userNameList, itemList)
     examUserLike(userNameList, itemList, user_item)
     user_cos = cos_sim(userNameList, user_item)
+    save_file(user_item)
+    print('finished!')
 
 
 
