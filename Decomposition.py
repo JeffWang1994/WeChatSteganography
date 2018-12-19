@@ -54,7 +54,8 @@ def gradAscent(data, K):
 
 
 if __name__ == '__main__':
-    data = load_file('data_unsparse.npy')
+    data = load_file('DataSet/data_unsparse.npy')
+    test_data = data.copy()
     print('该数据集中有21名用户，{}条动态信息'.format(data.shape[1]))
 
     [user, item] = data.shape
@@ -83,3 +84,9 @@ if __name__ == '__main__':
 
     print(result)
     print('program finished!')
+
+    np.save('p.npy', p)
+    np.save('q.npy', q)
+    np.save('SVD_10.npy', result)
+    np.save('test.npy', test_data)
+
