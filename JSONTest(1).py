@@ -154,6 +154,16 @@ my_top20 = my_top[0:20]                           #被我点赞最多的前20名
 print ('互动最高（点赞次数最多）：')
 print (my_top20)
 
+#在user-item矩阵后加上一维（my_interaction,authorId） 构造user-item-added矩阵
+interaction_feature = []
+for item in itemList:
+    for user in userNameList:
+        if user == item['authorId']:
+            user_index = userNameList.index(user)
+#            item_index = itemList.index(item)
+            interaction_feature.append(my_interaction[user_index])
+user_item_added = np.row_stack((user_item,interaction_feature))   #将特征加在矩阵最后一行
+
 # 建立以top20为主索引的top20-item矩阵
 top20_item = np.zeros((len(my_top20)+1, len(itemList)))
 num_index = 0
@@ -187,25 +197,28 @@ print (my_co_top20)
 
 #删除无点赞信息或只有我点赞的item 构建user_item_arranged矩阵
 item_user = np.transpose(user_item)
+item_user_added = np.transpose(user_item_added)
 item_arranged = []
 for i in range(0,len(item_user)):
     if sum(item_user[i]) !=0 :      #有点赞记录的item
         if sum(item_user[i]) ==1:
             if item_user[i,my_num] != 1 :  #去除仅被我点赞的item
-                item_arranged.append(item_user[i])
+                item_arranged.append(item_user_added[i])
         else:
-            item_arranged.append(item_user[i])
+            item_arranged.append(item_user_added[i])
 user_item_arranged = np.transpose(item_arranged)
 
 # 建立以co_top20为主索引的co_top20_item矩阵
-co_top20_item = np.zeros((len(my_co_top20)+1, len(item_arranged)))
+co_top20_item = np.zeros((len(my_co_top20)+2, len(item_arranged)))
 num_index = 0
 for top_tuple in my_co_top20:
     top_index = top_tuple[2]
     co_top20_item[num_index]=user_item_arranged[top_index]
     num_index +=1
+co_top20_item[num_index]=user_item_arranged[len(user_item_arranged)-1]
+num_index +=1
 co_top20_item[num_index]=user_item_arranged[my_num]           #矩阵最后加上我的点赞记录
-print ('co_top(20+1)*item矩阵')
+print ('co_top(20+2)*item矩阵')
 print (co_top20_item)
 
 d = np.transpose(co_top20_item)
@@ -235,7 +248,7 @@ prediction_arranged = np.zeros((len(test_y_predict), 1))
 length = len(test_y_predict)
 j = range(0,length-1)
 for i in j:
-    if test_y_predict[i] > 0.2:
+    if test_y_predict[i] > 0.21:
         prediction_arranged[i] = 1
 
 accuracy = accuracy_score(test_label,prediction_arranged)
@@ -255,7 +268,7 @@ plt.show()  #ROC曲线
 print('准确率:{}'.format(accuracy))
 print('精确率:{}'.format(precision))
 print('召回率:{}'.format(recall))
-
+print('召回率:{}'.format(recall))
 '''
 print ("\nlog regression")
 print ("\t training start ...")
