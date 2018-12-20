@@ -228,7 +228,7 @@ w = linear_regression(train_data, train_label, 'gd', gamma, eps, max_iter)
 print ("\t training done !")
 train_y_predict = train_data.dot(w)
 test_y_predict = test_data.dot(w)
-prediction = autoNorm(test_y_predict)
+
 print ("\t train predict error\t: %f"%(sum( abs( ((train_y_predict > threshold) + 0) - ((train_label > threshold) + 0) ))[0] / (train_num + 0)))
 print ("\t test predict error \t: %f"%(sum( abs( ((test_y_predict > threshold) + 0) - ((test_label > threshold) + 0) ))[0] / (test_num + 0)))
 prediction_arranged = np.zeros((len(test_y_predict), 1))
@@ -254,7 +254,6 @@ plt.show()  #ROC曲线
 
 print('准确率:{}'.format(accuracy))
 print('精确率:{}'.format(precision))
-print('召回率:{}'.format(recall))
 print('召回率:{}'.format(recall))
 
 '''
