@@ -8,6 +8,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
+from sklearn.linear_model import LinearRegression
 
 # 导入JSON文件
 f = open('sns_hong.json','r', encoding='UTF-8')
@@ -220,17 +221,17 @@ test_data = d[train_num:n,0: (m-1)]
 test_data = np.c_[test_data, np.ones((test_num, 1))]
 test_label = d[train_num:n,m-1].reshape(test_num,1)
 
-print ("\n linear regression")
-print ("\t training start ...")
+print("\n linear regression")
+print("\t training start ...")
 threshold = (max(train_label) + min(train_label)) / 2
 gamma, eps, max_iter = 0.001, 0.00001, 10000
 w = linear_regression(train_data, train_label, 'gd', gamma, eps, max_iter)
-print ("\t training done !")
+print("\t training done !")
 train_y_predict = train_data.dot(w)
 test_y_predict = test_data.dot(w)
 
-print ("\t train predict error\t: %f"%(sum( abs( ((train_y_predict > threshold) + 0) - ((train_label > threshold) + 0) ))[0] / (train_num + 0)))
-print ("\t test predict error \t: %f"%(sum( abs( ((test_y_predict > threshold) + 0) - ((test_label > threshold) + 0) ))[0] / (test_num + 0)))
+print("\t train predict error\t: %f"%(sum( abs( ((train_y_predict > threshold) + 0) - ((train_label > threshold) + 0) ))[0] / (train_num + 0)))
+print("\t test predict error \t: %f"%(sum( abs( ((test_y_predict > threshold) + 0) - ((test_label > threshold) + 0) ))[0] / (test_num + 0)))
 prediction_arranged = np.zeros((len(test_y_predict), 1))
 length = len(test_y_predict)
 j = range(0,length-1)
@@ -238,11 +239,11 @@ for i in j:
     if test_y_predict[i] > 0.2:
         prediction_arranged[i] = 1
 
-accuracy = accuracy_score(test_label,prediction_arranged)
-precision = precision_score(test_label,prediction_arranged)
-recall = recall_score(test_label,prediction_arranged)
-fpr,tpr,thresholds = roc_curve(test_label,prediction_arranged)
-roc_auc = roc_auc_score(test_label,prediction_arranged)
+accuracy = accuracy_score(test_label, prediction_arranged)
+precision = precision_score(test_label, prediction_arranged)
+recall = recall_score(test_label, prediction_arranged)
+fpr,tpr,thresholds = roc_curve(test_label, prediction_arranged)
+roc_auc = roc_auc_score(test_label, prediction_arranged)
 
 plt.plot(fpr,tpr,linewidth=2,label="ROC")
 plt.xlabel("false presitive rate")
