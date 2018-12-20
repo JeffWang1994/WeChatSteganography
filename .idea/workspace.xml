@@ -43,8 +43,18 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/JSONTest(1).py">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
             <state relative-caret-position="320">
               <caret line="257" selection-start-line="257" selection-end-line="257" />
+=======
+<<<<<<< HEAD
+            <state relative-caret-position="1917">
+              <caret line="265" column="60" selection-start-line="265" selection-start-column="60" selection-end-line="265" selection-end-column="60" />
+=======
+            <state relative-caret-position="702">
+              <caret line="276" column="12" selection-start-line="276" selection-start-column="12" selection-end-line="276" selection-end-column="12" />
+>>>>>>> parent of 67897fb... 增加了归一化
+>>>>>>> aab71cf9856e709c00e5c52a2a2d3e798aad427a
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -55,8 +65,21 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/regression.py">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
             <state relative-caret-position="675">
               <caret line="78" selection-start-line="78" selection-end-line="78" />
+=======
+<<<<<<< HEAD
+            <state relative-caret-position="549">
+              <caret line="90" selection-start-line="90" selection-end-line="90" />
+=======
+            <state relative-caret-position="497">
+              <caret line="78" selection-start-line="78" selection-end-line="78" />
+>>>>>>> parent of 67897fb... 增加了归一化
+              <folding>
+                <element signature="e#43#52#0" expanded="true" />
+              </folding>
+>>>>>>> aab71cf9856e709c00e5c52a2a2d3e798aad427a
             </state>
           </provider>
         </entry>
@@ -218,12 +241,20 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1545186458946</updated>
+<<<<<<< HEAD
+      <workItem from="1545186460956" duration="26694000" />
+=======
       <workItem from="1545186460956" duration="17623000" />
+>>>>>>> parent of 67897fb... 增加了归一化
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
+<<<<<<< HEAD
+    <option name="totallyTimeSpent" value="26694000" />
+=======
     <option name="totallyTimeSpent" value="17623000" />
+>>>>>>> parent of 67897fb... 增加了归一化
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="6" />
@@ -280,15 +311,38 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/regression.py">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
         <state relative-caret-position="675">
           <caret line="78" selection-start-line="78" selection-end-line="78" />
+=======
+<<<<<<< HEAD
+        <state relative-caret-position="549">
+          <caret line="90" selection-start-line="90" selection-end-line="90" />
+=======
+        <state relative-caret-position="497">
+          <caret line="78" selection-start-line="78" selection-end-line="78" />
+>>>>>>> parent of 67897fb... 增加了归一化
+          <folding>
+            <element signature="e#43#52#0" expanded="true" />
+          </folding>
+>>>>>>> aab71cf9856e709c00e5c52a2a2d3e798aad427a
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/JSONTest(1).py">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
         <state relative-caret-position="320">
           <caret line="257" selection-start-line="257" selection-end-line="257" />
+=======
+<<<<<<< HEAD
+        <state relative-caret-position="1917">
+          <caret line="265" column="60" selection-start-line="265" selection-start-column="60" selection-end-line="265" selection-end-column="60" />
+=======
+        <state relative-caret-position="702">
+          <caret line="276" column="12" selection-start-line="276" selection-start-column="12" selection-end-line="276" selection-end-column="12" />
+>>>>>>> parent of 67897fb... 增加了归一化
+>>>>>>> aab71cf9856e709c00e5c52a2a2d3e798aad427a
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
