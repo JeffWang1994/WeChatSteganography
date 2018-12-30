@@ -213,7 +213,11 @@ for item in origin_data:
 my_co_occurrence = co_occurrence[my_num]
 f2 = zip(my_co_occurrence,userNameList,num)
 my_co_top = sorted(f2,reverse = True)
-my_co_top20 = my_co_top[0:20]                           #跟我共同点赞最多的前20名用户
+for top_tuple in my_co_top:
+    if top_tuple[0] ==0:
+        zero_index = my_co_top.index(top_tuple)
+        break
+my_co_top20 = my_co_top[0:zero_index]                           #有过跟我共同点赞记录的用户
 #print ('同时点赞次数最多：')
 #print (my_co_top20)
 
@@ -252,10 +256,22 @@ for top_tuple in my_co_top20:
 #num_index +=1
 co_top20_item[num_index]=user_item_arranged[my_num]           #矩阵最后加上我的点赞记录
 user_top20_cos = 1-pairwise_distances(co_top20_item,metric='cosine')
+row_index = 0
+column_index = []
+for row in user_top20_cos:                                    #去除用户相关性
+    for column in range(row_index):
+        if user_top20_cos[row_index,column] >0.56:
+            column_index.append(column)
+    row_index +=1
+co_top20_item = np.delete(co_top20_item,column_index,axis=0)
 #print ('co_top(20+2)*item矩阵')
 #print (co_top20_item)
-
-d = np.transpose(co_top20_item)
+#user_item_y = np.row_stack((user_item, user_item[my_num]))
+#d = np.transpose(user_item_y)  #全部数据集+我的点赞情况
+aa,bb = co_top20_item.shape
+cc=22
+co_top20_item = np.row_stack((co_top20_item[:cc,:],co_top20_item[aa-1]))  #精简数据集+我的点赞情况
+d = np.transpose(co_top20_item) #精简数据集
 #np.random.shuffle(d) #随机乱序
 n, m = d.shape
 test_num = round(1 * n / 3) #取数据集前1/3为测试集
@@ -314,10 +330,11 @@ test_predict = mnb.predict(test_data)
 accuracy = accuracy_score(test_label.ravel(), test_predict)
 precision = precision_score(test_label.ravel(), test_predict)
 recall = recall_score(test_label.ravel(), test_predict)
+F1 = 2*precision*recall/(precision+recall)
 print('准确率:{}'.format(accuracy))
 print('精确率:{}'.format(precision))
 print('召回率:{}'.format(recall))
-
+print('F1:{}'.format(F1))
 print("\n linear regression")
 print("\t training start ...")
 threshold = (max(train_label) + min(train_label)) / 2
@@ -352,6 +369,7 @@ for i in j:
 accuracy = accuracy_score(test_label, prediction_arranged)
 precision = precision_score(test_label, prediction_arranged)
 recall = recall_score(test_label, prediction_arranged)
+F1 = 2*precision*recall/(precision+recall)
 fpr,tpr,thresholds = roc_curve(test_label, prediction_arranged)
 roc_auc = roc_auc_score(test_label, prediction_arranged)
 
@@ -366,6 +384,7 @@ plt.show()  #ROC曲线
 print('准确率:{}'.format(accuracy))
 print('精确率:{}'.format(precision))
 print('召回率:{}'.format(recall))
+print('F1:{}'.format(F1))
 
 '''
 print ("\nlog regression")
