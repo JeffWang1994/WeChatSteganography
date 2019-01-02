@@ -144,14 +144,15 @@ for item in origin_data:
             for users in userNameList:
                 for item_like in item['likes']:
                     if users == item_like['userId']:
-                        user_interaction[user_index, users_index] += 1
+                        user_interaction[users_index, user_index] += 1
                 users_index +=1
         user_index +=1
         users_index =0
     user_index =0
 
 my_num = userNameList.index('wxid_vyebwqsb5wo21') #获取我在用户列表中的索引位置
-my_interaction = user_interaction[my_num]         #我为其余用户的点赞总数
+my_interaction = user_interaction[my_num]
+#x = sum(my_interaction)#我为其余用户的点赞总数
 num = range(0,(len(userNameList))-1)              #添加位置索引
 f1 = zip(my_interaction,userNameList,num)
 my_top = sorted(f1,reverse = True)

@@ -107,7 +107,7 @@ for i in range(len(userNameList)):
             SUMM = SUMM + 1
 
 #print(SUMM)
-
+'''
 single_max = []
 all_max = []
 temp = {}
@@ -133,6 +133,7 @@ f = zip(temp.values(),temp.keys())
 all_max = sorted(f,reverse = True)
 #print ('获赞总数前20：')
 #print (all_max[0:21])
+'''
 
 #建立互动矩阵 计算每位用户为其他用户所有动态的点赞总数
 user_interaction = np.zeros((len(userNameList), len(userNameList)))
@@ -144,7 +145,7 @@ for item in origin_data:
             for users in userNameList:
                 for item_like in item['likes']:
                     if users == item_like['userId']:
-                        user_interaction[user_index, users_index] += 1
+                        user_interaction[users_index, user_index] += 1
                 users_index +=1
         user_index +=1
         users_index =0
@@ -152,22 +153,30 @@ for item in origin_data:
 
 #删除没有给任何人点过赞的用户
 user_interaction_zero = []
+interaction_sum = []
+interaction_index = []
 for hang in range(len(userNameList)):
-    interaction_sum = sum(user_interaction[hang])
-    if interaction_sum !=0:
+    interaction_sum.append(sum(user_interaction[hang,:]))
+    if sum(user_interaction[hang]) !=0:
         user_interaction_zero.append(userNameList[hang])
+    else:
+        interaction_index.append(hang)
 
-userNameList = user_interaction_zero    #更新userNamelist
-
+userNameList = user_interaction_zero    #更新userNamelist = 166
+user_interaction = np.delete(user_interaction,interaction_index,axis=0)
+user_interaction = np.delete(user_interaction,interaction_index,axis=1)
+user_item = np.delete(user_item,interaction_index,axis=0)
+#user_interaction 166*166
 
 my_num = userNameList.index('wxid_vyebwqsb5wo21') #获取我在用户列表中的索引位置
 my_interaction = user_interaction[my_num]         #我为其余用户的点赞总数
-num = range(0,(len(userNameList))-1)              #添加位置索引
+num = range(len(userNameList))              #添加位置索引
 f1 = zip(my_interaction,userNameList,num)
 my_top = sorted(f1,reverse = True)
 my_top20 = my_top[0:20]                           #被我点赞最多的前20名用户
 #print ('互动最高（点赞次数最多）：')
 #print (my_top20)
+
 
 #统计每位用户发布的动态总数
 author_sum = np.zeros((len(userNameList),1))
@@ -187,6 +196,7 @@ for i in range(len(userNameList)):
 io.savemat('ratio.mat',{'ratio':ratio})  #统计我对每位用户历史的平均点赞概率
 
 #在user-item矩阵后加上一维（my_interaction,authorId） 构造user-item-added矩阵
+'''
 interaction_feature = []
 for item in itemList:
     for user in userNameList:
@@ -195,6 +205,7 @@ for item in itemList:
 #            item_index = itemList.index(item)
             interaction_feature.append(my_interaction[user_index])
 user_item_added = np.row_stack((user_item,interaction_feature))   #将特征加在矩阵最后一行
+'''
 
 # 建立以top20为主索引的top20-item矩阵
 top20_item = np.zeros((len(my_top20)+1, len(itemList)))
@@ -233,29 +244,57 @@ my_co_top20 = my_co_top[0:zero_index]                           #有过跟我共
 
 #删除无点赞信息或只有我点赞的item 构建user_item_arranged矩阵
 item_user = np.transpose(user_item)
-item_user_added = np.transpose(user_item_added)
+#item_user_added = np.transpose(user_item_added)
 item_arranged = []
 for i in range(0,len(item_user)):
     if sum(item_user[i]) !=0 :      #有点赞记录的item
         if sum(item_user[i]) ==1:
             if item_user[i,my_num] != 1 :  #去除仅被我点赞的item
-                item_arranged.append(item_user_added[i])
+                #item_arranged.append(item_user_added[i])
+                item_arranged.append(item_user[i])
         else:
-            item_arranged.append(item_user_added[i])
+            #item_arranged.append(item_user_added[i])
+            item_arranged.append(item_user[i])
 user_item_arranged = np.transpose(item_arranged)
 
 #对user_item_arranged矩阵进行PCA主成分分析
+'''
 item_user_arranged = np.transpose(user_item_arranged[:192,:])
 pca = PCA(n_components=0.9)
 pca.fit(item_user_arranged)
 item_user_arranged_pca = pca.transform(item_user_arranged)
-#x = pca.components_
-
+x = pca.components_
+'''
 #利用余弦相似度计算用户与用户之间的相似度
-user_item_cos = user_item_arranged[:192,:]
+user_item_cos_x = np.row_stack((user_item_arranged,user_item_arranged[my_num]))
+user_item_cos = np.zeros((len(my_co_top), len(item_arranged)))
+num_index = 0
+for top_tuple in my_co_top:
+    top_index = top_tuple[2]                 #按照co——occurrence 对除我以外的user排序
+    if top_index != my_num:
+        user_item_cos[num_index]=user_item_cos_x[top_index]
+        num_index +=1
+user_item_cos[num_index] = user_item_cos_x[my_num] #把我的数据放置最后
+
 user_cos = 1-pairwise_distances(user_item_cos,metric='cosine')
 
+row_index = 0
+column_index = []
+for row in user_cos:
+    #去除用户相关性
+    for column in range(row_index):
+        if user_cos[row_index,column] >0.6:
+            column_index.append(column)
+    row_index +=1
+user_item_cos = np.delete(user_item_cos,column_index,axis=0)
+
+aa,bb = user_item_cos.shape
+cc=130
+user_item_cos = np.row_stack((user_item_cos[:cc,:],user_item_cos[aa-1]))  #精简数据集+我的点赞情况
+d = np.transpose(user_item_cos) #最终数据集
+
 # 建立以co_top20为主索引的co_top20_item矩阵
+'''
 co_top20_item = np.zeros((len(my_co_top20)+1, len(item_arranged)))
 num_index = 0
 for top_tuple in my_co_top20:
@@ -282,6 +321,7 @@ aa,bb = co_top20_item.shape
 cc=22
 co_top20_item = np.row_stack((co_top20_item[:cc,:],co_top20_item[aa-1]))  #精简数据集+我的点赞情况
 d = np.transpose(co_top20_item) #精简数据集
+'''
 #np.random.shuffle(d) #随机乱序
 n, m = d.shape
 test_num = round(1 * n / 3) #取数据集前1/3为测试集
@@ -302,9 +342,11 @@ test_predict = forest.predict(test_data)
 accuracy = accuracy_score(test_label.ravel(), test_predict)
 precision = precision_score(test_label.ravel(), test_predict)
 recall = recall_score(test_label.ravel(), test_predict)
+F1 = 2*precision*recall/(precision+recall)
 print('准确率:{}'.format(accuracy))
 print('精确率:{}'.format(precision))
 print('召回率:{}'.format(recall))
+print('F1:{}'.format(F1))
 
 #GBDT
 from sklearn.ensemble import GradientBoostingClassifier
@@ -315,9 +357,11 @@ test_predict = gbdt.predict(test_data)
 accuracy = accuracy_score(test_label.ravel(), test_predict)
 precision = precision_score(test_label.ravel(), test_predict)
 recall = recall_score(test_label.ravel(), test_predict)
+F1 = 2*precision*recall/(precision+recall)
 print('准确率:{}'.format(accuracy))
 print('精确率:{}'.format(precision))
 print('召回率:{}'.format(recall))
+print('F1:{}'.format(F1))
 
 #BNB
 from sklearn.naive_bayes import BernoulliNB
@@ -328,9 +372,12 @@ test_predict = bnb.predict(test_data)
 accuracy = accuracy_score(test_label.ravel(), test_predict)
 precision = precision_score(test_label.ravel(), test_predict)
 recall = recall_score(test_label.ravel(), test_predict)
+F1 = 2*precision*recall/(precision+recall)
 print('准确率:{}'.format(accuracy))
 print('精确率:{}'.format(precision))
 print('召回率:{}'.format(recall))
+print('F1:{}'.format(F1))
+
 #MNB
 from sklearn.naive_bayes import MultinomialNB
 mnb = MultinomialNB(alpha=0.01)
@@ -345,6 +392,7 @@ print('准确率:{}'.format(accuracy))
 print('精确率:{}'.format(precision))
 print('召回率:{}'.format(recall))
 print('F1:{}'.format(F1))
+
 print("\n linear regression")
 print("\t training start ...")
 threshold = (max(train_label) + min(train_label)) / 2
@@ -410,7 +458,7 @@ test_y_predict = test_data.dot(w)
 print ("\t training done")
 print ("\t train predict error\t: %f"%(sum( abs( ((train_y_predict > threshold) + 0) - ((train_label > threshold) + 0) ))[0] / (train_num + 0.0)))
 print ("\t test predict error \t: %f"%(sum( abs( ((test_y_predict > threshold) + 0) - ((test_label > threshold) + 0) ))[0] / (test_num + 0.0)))
-'''
+''' #d对数回归
 print ("\nlogistic regression")
 print ("\t training start ...")
 min_label, max_label = min(train_label), max(train_label)
