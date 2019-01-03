@@ -246,15 +246,19 @@ my_co_top20 = my_co_top[0:zero_index]                           #有过跟我共
 item_user = np.transpose(user_item)
 #item_user_added = np.transpose(user_item_added)
 item_arranged = []
+item_author = []  #433条item的authorId
 for i in range(0,len(item_user)):
+    item = origin_data[i]
     if sum(item_user[i]) !=0 :      #有点赞记录的item
         if sum(item_user[i]) ==1:
             if item_user[i,my_num] != 1 :  #去除仅被我点赞的item
                 #item_arranged.append(item_user_added[i])
                 item_arranged.append(item_user[i])
+                item_author.append(item['authorId'])
         else:
             #item_arranged.append(item_user_added[i])
             item_arranged.append(item_user[i])
+            item_author.append(item['authorId'])
 user_item_arranged = np.transpose(item_arranged)
 
 #对user_item_arranged矩阵进行PCA主成分分析
@@ -289,7 +293,7 @@ for row in user_cos:
 user_item_cos = np.delete(user_item_cos,column_index,axis=0)
 
 aa,bb = user_item_cos.shape
-cc=130
+cc=13
 user_item_cos = np.row_stack((user_item_cos[:cc,:],user_item_cos[aa-1]))  #精简数据集+我的点赞情况
 d = np.transpose(user_item_cos) #最终数据集
 
@@ -324,14 +328,15 @@ d = np.transpose(co_top20_item) #精简数据集
 '''
 #np.random.shuffle(d) #随机乱序
 n, m = d.shape
-test_num = round(1 * n / 3) #取数据集前1/3为测试集
-train_num = n - test_num  #后2/3训练集
+test_num = 140 #取数据集前1/3为测试集
+train_num = n - round(1 * n / 3)  #后2/3训练集
 train_data = d[0:train_num,0: (m-1)]
 train_data = np.c_[train_data, np.ones((train_num,1))] #回归的时候会有常数项，故此处加了一列
 train_label = d[0:train_num,m-1].reshape(train_num,1) #python中一维数组默认是行向量，需要reshape函数转换
-test_data = d[train_num:n,0: (m-1)]
+test_data = d[train_num:(train_num+test_num),0: (m-1)]
 test_data = np.c_[test_data, np.ones((test_num, 1))]
-test_label = d[train_num:n,m-1].reshape(test_num,1)
+test_label = d[train_num:(train_num+test_num),m-1].reshape(test_num,1)
+io.savemat('test_label.mat',{'test_label':test_label})
 
 #random forest
 from sklearn.ensemble import RandomForestClassifier
@@ -403,17 +408,43 @@ train_y_predict = train_data.dot(w)
 test_y_predict = test_data.dot(w)
 
 #输出预测概率
-predict = np.zeros((n,1))
+predict = np.zeros((len(test_y_predict),1))
 for i in range(len(test_y_predict)):
     predict[i] = test_y_predict[i]
-for j in range(len(train_y_predict)):
-    predict[j+len(test_y_predict)] = train_y_predict[j]
+#for j in range(len(train_y_predict)):
+#    predict[j+len(test_y_predict)] = train_y_predict[j]
 
 for k in range(len(predict)):
     if predict[k] >0.5 :
         predict[k] =0.5
 
-io.savemat('prediction.mat',{'predict':predict})
+io.savemat('prediction.mat',{'predict':predict})  #新方法中对测试集中每条item的点赞概率
+
+author_sum = np.zeros((len(userNameList),1))
+my_love = np.zeros((len(userNameList),1))
+for i in range(train_num):
+    for user in userNameList:
+        if user == item_author[i]:
+            author_sum_index = userNameList.index(user)
+            author_sum[author_sum_index] += 1
+            if train_label[i] ==1:
+                my_love[author_sum_index] +=1
+x=sum(author_sum)
+
+ratio_train = np.zeros((len(userNameList),1))
+for i in range(len(userNameList)):
+    if author_sum[i] !=0:
+        ratio_train[i] = my_love[i]/author_sum[i]
+    else:
+        ratio_train[i] =0.5
+ratio_test = np.zeros((test_num,1))
+for i in range(test_num):
+    j = i+train_num
+    for user in userNameList:
+        if user == item_author[j]:
+            index = userNameList.index(user)
+            ratio_test[i] = ratio_train[index]
+io.savemat('ratio_test.mat',{'ratio_test':ratio_test})  #老方法对测试集中每条item对应作者的点赞概率
 
 print("\t train predict error\t: %f"%(sum( abs( ((train_y_predict > threshold) + 0) - ((train_label > threshold) + 0) ))[0] / (train_num + 0)))
 print("\t test predict error \t: %f"%(sum( abs( ((test_y_predict > threshold) + 0) - ((test_label > threshold) + 0) ))[0] / (test_num + 0)))
